@@ -5,7 +5,7 @@ import datetime
 import os
 import sys
 import hashlib
-import mygitapp
+import mygitappinit
 #递交单个文件到数据库
 databasefile = os.path.isfile(os.getcwd()+"\.mygitapp\mygit.db")
 if databasefile:
