@@ -1,10 +1,20 @@
+# author: chenyi
+# date  :2022/11/9 17:29
+# IDE:PyCharm
+# python 3.85
+
 import requests
 import json
 import js2py
+# js2py 是用来执行JS的模块
 import hashlib
 import re
 from bs4 import BeautifulSoup
 import pyttsx3
+# 播放语音的模块
+import time
+
+
 
 # 播放查询单词声音
 def tts(soykey):
@@ -13,6 +23,8 @@ def tts(soykey):
     engine.setProperty('rate', rate-50)
     engine.say(str(soykey))
     engine.runAndWait()
+
+
 
 
 
@@ -59,8 +71,8 @@ def baidufangyi():
 # 金山翻译参考 https://blog.csdn.net/yuankingping/article/details/112289212
 def jinsanfanyi():
     try:
-        fanyiStr = '6key_cibaifanyicjbysdlove1' + key     
-        #6key_cibaifanyicjbysdlove1 是金山的加密文字
+        fanyiStr = '6key_web_fanyiifanyiweb8hc9s98e' + key
+        # 6key_web_fanyiifanyiweb8hc9s98e 是金山的加密文字
         a = hashlib.md5() #初始化MD5
         a.update(fanyiStr.encode(encoding='utf-8'))
         q = a.hexdigest()[0:16]#截取md5 前16位数字
@@ -68,7 +80,8 @@ def jinsanfanyi():
         headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
         }
-        url = "https://ifanyi.iciba.com/index.php?c=trans&m=fy&client=6&auth_user=key_ciba&sign=" + q
+        # url = "https://ifanyi.iciba.com/index.php?c=trans&m=fy&client=6&auth_user=key_ciba&sign=" + q
+        url = "https://ifanyi.iciba.com/index.php?c=trans&m=fy&client=6&auth_user=key_web_fanyi&sign="+q
         postdata = {
         'form': 'auto',
         'to': 'auto',
@@ -247,17 +260,83 @@ def alifangyi():
         print('sorry 阿里未能翻译')
 
 
-#微软翻译
+#腾讯翻译
+# 模拟浏览器第一次打开页面，获取cookie
+def requ_one():
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+    }
+    url = "https://fanyi.qq.com/"
+    res = requests.get(url)
+    # print(res.cookies['fy_guid'])
+    return res.cookies['fy_guid']
+# requ_one()
+
+def getcookie():
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+        # 'cookie':requ_one()
+    }
+    url = "https://fanyi.qq.com/api/reauth12f"
+    s = requests.post(url, headers=headers)
+    json_value = s.json()
+    qtv, qtk = json_value['qtv'], json_value['qtk']
+    return qtv, qtk
+
+def tenxun():
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35',
+        'cookie':"fy_guid={}; ADHOC_MEMBERSHIP_CLIENT_ID1.0=f6106e7e-835c-71bd-7a83-cf024852568b; pgv_pvid=1062695966; ts_uid=7781051125; openCount=6;qtv={}; qtk={}".format(requ_one(), getcookie()[0], getcookie()[1])
+    }  # 设置请求的头部
+    url = 'https://fanyi.qq.com/api/translate'
+    # 判断 输入内容是否为中文,中文e等于0，英文e等于1
+    for _char in key:
+        if key >= '\u4e00' and key <= '\u9fa5':
+            # e = 0
+            tatLang = 'en'
+        else:
+            # e = 1
+            tatLang = 'zh'
+
+    # 自动检测中英文
+    if tatLang == 'en':
+        src = 'zh'
+    else:
+        src = 'en'
+    t = time.time()*1000
+    sessionUuid = str(t)
+    sessionUuid_13 = "translate_uuid"+sessionUuid[0:13]
+    # print(sessionUuid[0:13])
+    postdata = {"source": src,
+                "target": tatLang,
+                "sourceText": key,
+                "qtv":getcookie()[1],
+                "qtk":getcookie()[0],
+                "ticket":"",
+                "tandstr":"",
+                "sessionUuid":sessionUuid_13
+                }
+    response = requests.post(url=url,data=postdata, headers=headers)  # 模拟请求
+    # print("translate_uuid"+sessionUuid[0:13])
+    resJSON = response.json()
+    # print(getcookie())
+    # print(resJSON)
+    # print("tenxun 翻译",resJSON['translate']['records'][0]['targetText'])
+    return resJSON['translate']['records'][0]['targetText']
+
 
 #'''
 
 while True:
     # getMenu = int(getMenu)
+    # 程序开始时间
+    start = time.time()
     print("\t|-----------translation--------------|")
     print("\t|   welcome use ssss translation     |")
     print("\t|author:https://github.com/sssschenyi|")
     print("\t|------------------------------------|")
     key=input("请输入需要翻译的文字:")
+    # key="""Namespaces are one honking great idea -- let's do more of those!"""
     #tts(key) # 调用函数，播放语音
     if key == "-q" or key == "-Q":
         break
@@ -265,9 +344,14 @@ while True:
         print("youdao 翻译结果-->", youdaofanyi(),"\n")
         print("jinsan 翻译结果-->", jinsanfanyi(),"\n")
         print("  360  翻译结果-->", qihufangyi(),"\n")
-        print("google 翻译结果-->",googlefangyi(),"\n")
+        # print("google 翻译结果-->",googlefangyi(),"\n")
         print(" baidu 翻译结果-->",baidufangyi(),"\n")
         print("aliba  翻译结果-->",alifangyi(),"\n")
         print("micro  翻译结果-->",microsoftfangyi(),"\n")
+        print("tenxun  翻译结果-->",tenxun(),"\n")
+        end = time.time()
+        print("run time: ",end - start)
+
+
 
 #'''
