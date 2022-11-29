@@ -341,7 +341,7 @@ while True:
     if key == "-q" or key == "-Q":
         break
     else :
-        print("youdao 翻译结果-->", youdaofanyi(),"\n")
+        # print("youdao 翻译结果-->", youdaofanyi(),"\n")
         print("jinsan 翻译结果-->", jinsanfanyi(),"\n")
         print("  360  翻译结果-->", qihufangyi(),"\n")
         # print("google 翻译结果-->",googlefangyi(),"\n")
